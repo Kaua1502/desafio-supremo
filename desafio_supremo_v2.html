@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desafio Supremo – Batalha do Conhecimento</title>
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--p1:#00c6ff;--p1d:#0072ff;--p2:#ff6a00;--p2d:#ee0979;--gold:#ffd700;--bg:#0a0a1a;--card:rgba(255,255,255,0.06);--radius:18px;--shadow:0 8px 32px rgba(0,0,0,0.5);}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Nunito',sans-serif;color:#fff;}
+#stars{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1;padding:20px;opacity:0;pointer-events:none;transition:opacity .4s;}
+.screen.active{opacity:1;pointer-events:all;}
+#setupScreen{background:radial-gradient(ellipse at 50% 0%,#1a0050 0%,var(--bg) 70%);}
+.logo{font-family:'Bangers',cursive;font-size:clamp(42px,7vw,90px);letter-spacing:4px;text-align:center;line-height:1;margin-bottom:6px;}
+.logo span.s1{color:var(--p1);text-shadow:0 0 30px var(--p1);}
+.logo span.s2{color:var(--p2);text-shadow:0 0 30px var(--p2);}
+.subtitle{font-size:clamp(13px,2vw,20px);letter-spacing:6px;text-transform:uppercase;color:var(--gold);margin-bottom:30px;text-align:center;}
+.creators{font-size:clamp(11px,1.4vw,15px);color:rgba(255,255,255,0.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:28px;text-align:center;}
+.setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;width:100%;max-width:900px;}
+.setup-panel{background:var(--card);border:1px solid rgba(255,255,255,0.1);border-radius:var(--radius);padding:20px;backdrop-filter:blur(10px);}
+.setup-panel h3{font-family:'Bangers',cursive;font-size:clamp(18px,2.5vw,26px);letter-spacing:2px;margin-bottom:14px;text-align:center;}
+.p1-panel h3{color:var(--p1);}.p2-panel h3{color:var(--p2);}
+.setup-panel input{width:100%;padding:10px 14px;border-radius:10px;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.08);color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:700;outline:none;transition:.2s;}
+.setup-panel input:focus{border-color:var(--gold);}
+.avatar-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.avatar-btn{width:42px;height:42px;border-radius:50%;border:3px solid transparent;font-size:20px;cursor:pointer;background:rgba(255,255,255,0.1);transition:.2s;}
+.avatar-btn.selected{border-color:var(--gold);transform:scale(1.2);}
+.full-panel{grid-column:1/-1;}
+.option-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px;}
+.opt-btn{padding:10px 18px;border-radius:30px;border:2px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-family:'Nunito',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:.2s;letter-spacing:1px;}
+.opt-btn:hover{background:rgba(255,255,255,0.15);}
+.opt-btn.selected{background:linear-gradient(135deg,var(--p1),var(--p2));border-color:transparent;color:#fff;box-shadow:0 0 15px rgba(0,198,255,0.4);}
+.start-btn{margin-top:24px;padding:16px 60px;font-family:'Bangers',cursive;font-size:clamp(22px,3vw,32px);letter-spacing:3px;border:none;border-radius:40px;background:linear-gradient(135deg,var(--gold),#ff9500);color:#000;cursor:pointer;box-shadow:0 0 30px rgba(255,215,0,0.5);transition:.2s;animation:pulsebtn 2s infinite;}
+.start-btn:hover{transform:scale(1.05);}
+@keyframes pulsebtn{0%,100%{box-shadow:0 0 30px rgba(255,215,0,.5);}50%{box-shadow:0 0 50px rgba(255,215,0,.9);}}
+
+/* GAME */
+#gameScreen{background:radial-gradient(ellipse at 50% 50%,#0d001f 0%,var(--bg) 80%);justify-content:flex-start;padding:0;}
+.game-wrap{display:flex;flex-direction:column;width:100%;height:100%;}
+.hud{display:flex;align-items:stretch;width:100%;height:90px;padding:0 12px;gap:12px;background:rgba(0,0,0,0.4);border-bottom:2px solid rgba(255,255,255,0.07);}
+.hud-player{flex:1;display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:0 0 var(--radius) var(--radius);}
+.hud-p1{background:linear-gradient(135deg,rgba(0,114,255,.25),transparent);border:2px solid rgba(0,198,255,.3);border-top:none;}
+.hud-p2{background:linear-gradient(135deg,transparent,rgba(238,9,121,.25));border:2px solid rgba(255,106,0,.3);border-top:none;flex-direction:row-reverse;text-align:right;}
+.hud-avatar{font-size:32px;filter:drop-shadow(0 0 8px currentColor);}
+.hud-info{flex:1;}
+.hud-name{font-size:clamp(13px,2vw,18px);font-weight:900;text-transform:uppercase;letter-spacing:1px;}
+.hud-score{font-family:'Bangers',cursive;font-size:clamp(24px,4vw,40px);letter-spacing:2px;line-height:1;}
+.hud-combo{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.7;}
+.score-bar-wrap{width:100%;height:6px;background:rgba(255,255,255,.1);border-radius:3px;margin-top:4px;overflow:hidden;}
+.score-bar{height:100%;border-radius:3px;transition:width .5s ease;}
+.hud-p1 .score-bar{background:linear-gradient(90deg,var(--p1),var(--p1d));}
+.hud-p2 .score-bar{background:linear-gradient(90deg,var(--p2d),var(--p2));}
+
+/* Individual timers inside each player side */
+.side-timer{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:52px;}
+.side-timer svg{transform:rotate(-90deg);}
+.side-timer-num{font-family:'Bangers',cursive;font-size:18px;text-align:center;margin-top:2px;transition:color .3s;}
+
+.hud-center{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:80px;padding:8px;}
+.round-badge{font-family:'Bangers',cursive;font-size:13px;letter-spacing:2px;color:var(--gold);text-transform:uppercase;}
+.cat-tag{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-top:4px;}
+
+.questions-area{display:flex;flex:1;gap:0;overflow:hidden;}
+.q-side{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px 20px;position:relative;}
+.q-side-left{border-right:2px solid rgba(255,255,255,.06);}
+.q-side-label{font-family:'Bangers',cursive;font-size:clamp(13px,1.8vw,18px);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;opacity:.6;}
+.q-side-left .q-side-label{color:var(--p1);}
+.q-side-right .q-side-label{color:var(--p2);}
+.question-box{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:16px 20px;text-align:center;margin-bottom:12px;width:100%;backdrop-filter:blur(6px);}
+.question-text{font-size:clamp(13px,1.8vw,20px);font-weight:800;line-height:1.4;}
+.difficulty-badge{display:inline-block;margin-top:6px;padding:3px 12px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
+.diff-facil{background:rgba(0,200,100,.25);color:#00c864;}
+.diff-medio{background:rgba(255,200,0,.2);color:#ffc800;}
+.diff-dificil{background:rgba(255,100,0,.2);color:#ff6400;}
+.diff-extreme{background:rgba(255,0,80,.25);color:#ff0050;}
+.answers-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;}
+.ans-btn{padding:10px 12px;border-radius:12px;border:2px solid rgba(255,255,255,.12);background:rgba(255,255,255,.07);color:#fff;font-family:'Nunito',sans-serif;font-size:clamp(12px,1.5vw,15px);font-weight:700;cursor:pointer;transition:.15s;text-align:left;line-height:1.3;}
+.ans-btn:hover:not(:disabled){transform:scale(1.03);border-color:rgba(255,255,255,.3);}
+.ans-btn:disabled{cursor:not-allowed;opacity:.5;}
+.ans-btn.correct{background:linear-gradient(135deg,#00c864,#00a050)!important;border-color:#00c864!important;animation:correctFlash .5s;}
+.ans-btn.wrong{background:linear-gradient(135deg,#ff0050,#cc0040)!important;border-color:#ff0050!important;animation:wrongShake .4s;}
+.ans-btn.p1-style{border-color:rgba(0,198,255,.3);}
+.ans-btn.p2-style{border-color:rgba(255,106,0,.3);}
+@keyframes correctFlash{0%,100%{filter:brightness(1);}50%{filter:brightness(1.5);}}
+@keyframes wrongShake{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* answered overlay (waiting for other player) */
+.answered-overlay{position:absolute;inset:0;background:rgba(0,0,0,.35);backdrop-filter:blur(3px);border-radius:0;display:flex;align-items:center;justify-content:center;z-index:5;pointer-events:none;}
+.answered-txt{font-family:'Bangers',cursive;font-size:clamp(18px,3vw,28px);letter-spacing:3px;opacity:.8;}
+
+.vf-box{background:rgba(255,255,255,.06);border:2px solid rgba(255,215,0,.3);border-radius:var(--radius);padding:16px;text-align:center;width:100%;}
+.vf-question{font-size:clamp(14px,2vw,20px);font-weight:800;margin-bottom:12px;}
+.vf-btns{display:flex;gap:12px;justify-content:center;}
+.vf-btn{flex:1;padding:14px;font-family:'Bangers',cursive;font-size:clamp(18px,3vw,28px);letter-spacing:3px;border:2px solid;border-radius:14px;cursor:pointer;transition:.2s;}
+.vf-true{background:rgba(0,200,100,.15);border-color:#00c864;color:#00c864;}
+.vf-false{background:rgba(255,0,80,.15);border-color:#ff0050;color:#ff0050;}
+.vf-btn:hover{filter:brightness(1.3);transform:scale(1.04);}
+
+.side-freeze-overlay{position:absolute;inset:0;background:rgba(0,80,200,.5);backdrop-filter:blur(8px) saturate(0.3);z-index:20;display:flex;align-items:center;justify-content:center;flex-direction:column;pointer-events:none;}
+#freezeOverlay{display:none!important;}
+.freeze-title{font-family:'Bangers',cursive;color:#00c6ff;text-shadow:0 0 30px #00c6ff;letter-spacing:4px;animation:icepulse 1s infinite;}
+@keyframes icepulse{0%,100%{filter:brightness(1);}50%{filter:brightness(1.4);}}
+
+#eventBanner{position:fixed;top:0;left:0;right:0;padding:14px;text-align:center;font-family:'Bangers',cursive;font-size:clamp(22px,4vw,40px);letter-spacing:4px;z-index:50;transform:translateY(-100%);transition:transform .4s;pointer-events:none;}
+#eventBanner.show{transform:translateY(0);}
+#eventBanner.steal{background:linear-gradient(90deg,#ff6a00,#ee0979);box-shadow:0 4px 30px rgba(238,9,121,.6);}
+#eventBanner.paralyze{background:linear-gradient(90deg,#0072ff,#00c6ff);box-shadow:0 4px 30px rgba(0,114,255,.7);}
+#eventBanner.extreme{background:linear-gradient(90deg,#ff0050,#ff6400);box-shadow:0 4px 30px rgba(255,0,80,.6);}
+
+.score-pop{position:fixed;font-family:'Bangers',cursive;font-size:36px;pointer-events:none;z-index:100;animation:popUp .9s ease forwards;}
+@keyframes popUp{0%{opacity:1;transform:translateY(0) scale(1);}100%{opacity:0;transform:translateY(-80px) scale(1.4);}}
+
+#endScreen{background:radial-gradient(ellipse at 50% 30%,#1a0040 0%,var(--bg) 70%);}
+.winner-area{text-align:center;margin-bottom:24px;}
+.winner-label{font-size:14px;letter-spacing:5px;text-transform:uppercase;color:var(--gold);margin-bottom:6px;}
+.winner-name{font-family:'Bangers',cursive;font-size:clamp(50px,8vw,100px);letter-spacing:4px;text-shadow:0 0 40px var(--gold);}
+.trophy{font-size:clamp(50px,8vw,90px);animation:trophySpin 2s infinite ease-in-out;}
+@keyframes trophySpin{0%,100%{transform:rotate(-8deg) scale(1);}50%{transform:rotate(8deg) scale(1.1);}}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;max-width:600px;width:100%;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid rgba(255,255,255,.1);border-radius:var(--radius);padding:16px;text-align:center;}
+.stat-val{font-family:'Bangers',cursive;font-size:clamp(28px,4vw,44px);color:var(--gold);}
+.stat-lbl{font-size:11px;letter-spacing:2px;text-transform:uppercase;opacity:.6;margin-top:4px;}
+.restart-btn{padding:14px 50px;font-family:'Bangers',cursive;font-size:clamp(20px,2.5vw,28px);letter-spacing:3px;border:none;border-radius:40px;background:linear-gradient(135deg,var(--p1),var(--p1d));color:#fff;cursor:pointer;box-shadow:0 0 25px rgba(0,198,255,.4);transition:.2s;}
+.restart-btn:hover{transform:scale(1.05);}
+.particle{position:fixed;pointer-events:none;z-index:200;width:10px;height:10px;border-radius:50%;animation:particleFall linear forwards;}
+@keyframes particleFall{0%{opacity:1;transform:translateY(0) rotate(0deg);}100%{opacity:0;transform:translateY(100vh) rotate(720deg);}}
+.blocked-indicator{position:absolute;inset:0;background:rgba(0,30,100,.6);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:10;flex-direction:column;gap:8px;}
+.blocked-indicator .bi-icon{font-size:40px;}
+.blocked-indicator .bi-txt{font-family:'Bangers',cursive;font-size:22px;letter-spacing:3px;color:#00c6ff;}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+
+<!-- SETUP -->
+<div class="screen active" id="setupScreen">
+  <div class="logo"><span class="s1">DESAFIO</span> <span class="s2">SUPREMO</span></div>
+  <div class="subtitle">⚡ Batalha do Conhecimento ⚡</div>
+  <div class="creators">Criado por Kauã &amp; Gabriele</div>
+  <div class="setup-grid">
+    <div class="setup-panel p1-panel">
+      <h3>🔵 Jogador 1</h3>
+      <input id="p1name" type="text" placeholder="Seu nome..." maxlength="16" value="Jogador 1">
+      <div class="avatar-row" id="p1avatars"></div>
+    </div>
+    <div class="setup-panel p2-panel">
+      <h3>🔴 Jogador 2</h3>
+      <input id="p2name" type="text" placeholder="Seu nome..." maxlength="16" value="Jogador 2">
+      <div class="avatar-row" id="p2avatars"></div>
+    </div>
+    <div class="setup-panel full-panel">
+      <h3 style="color:var(--gold)">📚 Matérias</h3>
+      <div class="option-row" id="subjectRow"></div>
+    </div>
+    <div class="setup-panel full-panel">
+      <h3 style="color:var(--gold)">⚙️ Dificuldade</h3>
+      <div class="option-row" id="diffRow"></div>
+    </div>
+  </div>
+  <button class="start-btn" onclick="startGame()">▶ INICIAR BATALHA</button>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="gameScreen">
+  <div id="freezeOverlay"></div>
+  <div class="game-wrap">
+    <div class="hud">
+      <div class="hud-player hud-p1" id="hud1">
+        <div class="hud-avatar" id="hud1av">🔵</div>
+        <div class="hud-info">
+          <div class="hud-name" id="hud1name">P1</div>
+          <div class="hud-score" id="hud1score" style="color:var(--p1)">0</div>
+          <div class="score-bar-wrap"><div class="score-bar" id="bar1" style="width:0%"></div></div>
+          <div class="hud-combo" id="hud1combo">Sequência: 0</div>
+        </div>
+        <div class="side-timer" id="timer1">
+          <svg width="44" height="44" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/>
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--p1)" stroke-width="3"
+              stroke-dasharray="113.1" stroke-dashoffset="0" id="timerArc1" stroke-linecap="round"/>
+          </svg>
+          <div class="side-timer-num" id="timerNum1" style="color:var(--p1)">—</div>
+        </div>
+      </div>
+      <div class="hud-center">
+        <div class="round-badge" id="roundBadge">Rodada 1</div>
+        <div class="cat-tag" id="catTag">—</div>
+      </div>
+      <div class="hud-player hud-p2" id="hud2">
+        <div class="side-timer" id="timer2">
+          <svg width="44" height="44" viewBox="0 0 44 44">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/>
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--p2)" stroke-width="3"
+              stroke-dasharray="113.1" stroke-dashoffset="0" id="timerArc2" stroke-linecap="round"/>
+          </svg>
+          <div class="side-timer-num" id="timerNum2" style="color:var(--p2)">—</div>
+        </div>
+        <div class="hud-info" style="text-align:right">
+          <div class="hud-name" id="hud2name">P2</div>
+          <div class="hud-score" id="hud2score" style="color:var(--p2)">0</div>
+          <div class="score-bar-wrap"><div class="score-bar" id="bar2" style="width:0%"></div></div>
+          <div class="hud-combo" id="hud2combo">Sequência: 0</div>
+        </div>
+        <div class="hud-avatar" id="hud2av">🔴</div>
+      </div>
+    </div>
+    <div class="questions-area" id="questionsArea">
+      <div class="q-side q-side-left" id="side1">
+        <div class="q-side-label">← Jogador 1</div>
+        <div class="question-box" id="qbox1">
+          <div class="question-text" id="qtext1">...</div>
+          <span class="difficulty-badge diff-facil" id="qbadge1">FÁCIL</span>
+        </div>
+        <div class="answers-grid" id="answers1"></div>
+      </div>
+      <div class="q-side q-side-right" id="side2">
+        <div class="q-side-label">Jogador 2 →</div>
+        <div class="question-box" id="qbox2">
+          <div class="question-text" id="qtext2">...</div>
+          <span class="difficulty-badge diff-facil" id="qbadge2">FÁCIL</span>
+        </div>
+        <div class="answers-grid" id="answers2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- END -->
+<div class="screen" id="endScreen">
+  <div class="trophy">🏆</div>
+  <div class="winner-area">
+    <div class="winner-label">CAMPEÃO DA BATALHA</div>
+    <div class="winner-name" id="winnerName" style="color:var(--gold)">—</div>
+  </div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <button class="restart-btn" onclick="goSetup()">🔄 NOVA BATALHA</button>
+</div>
+
+<div id="eventBanner"></div>
+
+<script>
+/* ── STARFIELD ── */
+(function(){
+  const c=document.getElementById('stars'),ctx=c.getContext('2d');
+  c.width=window.innerWidth;c.height=window.innerHeight;
+  const stars=Array.from({length:180},()=>({x:Math.random()*c.width,y:Math.random()*c.height,r:Math.random()*1.5+.3,s:Math.random()*.5+.2}));
+  function draw(){ctx.clearRect(0,0,c.width,c.height);stars.forEach(s=>{s.y+=s.s;if(s.y>c.height)s.y=0;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,'+(Math.random()*.3+.3)+')';ctx.fill();});requestAnimationFrame(draw);}
+  draw();
+})();
+
+/* ═══════════════ BANCO DE PERGUNTAS ═══════════════ */
+const QUESTIONS={
+  Historia:{
+    facil:[
+      {q:"Quem foi o primeiro imperador do Brasil?",a:["Dom Pedro I","Dom Pedro II","Dom João VI","Tiradentes"],c:0},
+      {q:"Em que ano o Brasil se tornou independente?",a:["1822","1889","1500","1808"],c:0},
+      {q:"Quem descobriu o Brasil para os portugueses?",a:["Pedro Álvares Cabral","Cristóvão Colombo","Vasco da Gama","Fernando Magalhães"],c:0},
+      {q:"Qual evento marcou o fim da monarquia no Brasil?",a:["Proclamação da República","Abolição da Escravatura","Independência","Guerra do Paraguai"],c:0},
+      {q:"Em que continente fica o Egito?",a:["África","Ásia","Europa","América"],c:0},
+      {q:"A Segunda Guerra Mundial terminou em que ano?",a:["1945","1939","1950","1941"],c:0},
+      {q:"Quem foi Tiradentes?",a:["Herói da Inconfidência Mineira","Primeiro presidente do Brasil","General da Guerra do Paraguai","Imperador do Brasil"],c:0},
+      {q:"A abolição da escravatura no Brasil ocorreu em que ano?",a:["1888","1822","1889","1900"],c:0},
+      {q:"Qual civilização construiu as pirâmides do Egito?",a:["Egípcia","Grega","Romana","Mesopotâmica"],c:0},
+      {q:"Em que continente fica o Brasil?",a:["América do Sul","América do Norte","Europa","África"],c:0},
+      {q:"Quem foi Napoleão Bonaparte?",a:["Imperador da França","Rei da Inglaterra","Czar da Rússia","Presidente dos EUA"],c:0},
+      {q:"A Primeira Guerra Mundial começou em que ano?",a:["1914","1939","1918","1900"],c:0},
+    ],
+    medio:[
+      {q:"Quem liderou o Terror na Revolução Francesa?",a:["Robespierre","Napoleão","Luís XVI","Danton"],c:0},
+      {q:"O que foi a Inquisição?",a:["Tribunal religioso medieval","Guerra santa","Movimento artístico","Revolução industrial"],c:0},
+      {q:"Em que ano ocorreu a Revolução Russa?",a:["1917","1905","1922","1914"],c:0},
+      {q:"Qual guerra ficou conhecida como a 'guerra das trincheiras'?",a:["Primeira Guerra Mundial","Segunda Guerra Mundial","Guerra da Coreia","Guerra do Vietnã"],c:0},
+      {q:"Quem foi Martin Luther King Jr.?",a:["Líder do movimento pelos direitos civis nos EUA","Presidente dos EUA","General da 2ª Guerra","Fundador da ONU"],c:0},
+      {q:"A Guerra Fria foi um conflito entre quais potências?",a:["EUA e URSS","EUA e China","EUA e Alemanha","Reino Unido e URSS"],c:0},
+      {q:"O que foi o Iluminismo?",a:["Movimento filosófico que valorizava a razão","Guerra religiosa","Movimento artístico barroco","Revolução industrial"],c:0},
+      {q:"Em que ano ocorreu a queda do Muro de Berlim?",a:["1989","1991","1985","1979"],c:0},
+    ],
+    dificil:[
+      {q:"Qual tratado encerrou formalmente a Primeira Guerra Mundial?",a:["Tratado de Versalhes","Tratado de Paris","Tratado de Utrecht","Tratado de Westfália"],c:0},
+      {q:"A 'Batalha de Stalingrado' ocorreu durante qual guerra?",a:["Segunda Guerra Mundial","Primeira Guerra Mundial","Guerra Fria","Guerra Civil Russa"],c:0},
+      {q:"Quem foi o último faraó do Egito antigo (antes da conquista romana)?",a:["Cleópatra VII","Ramsés II","Tutancâmon","Amenófis IV"],c:0},
+      {q:"O que foi o 'Plano Marshall'?",a:["Ajuda econômica dos EUA à Europa pós-guerra","Invasão da Normandia","Tratado de paz da 2ª Guerra","Aliança militar da OTAN"],c:0},
+      {q:"A Revolução Francesa começou com a queda de qual prisão?",a:["Bastilha","Torre de Londres","Alcatraz","Lubyanka"],c:0},
+      {q:"Qual foi a primeira constituição do Brasil republicano?",a:["Constituição de 1891","Constituição de 1824","Constituição de 1946","Constituição de 1988"],c:0},
+    ]
+  },
+  Matematica:{
+    facil:[
+      {q:"Quanto é 7 × 8?",a:["56","54","64","48"],c:0},
+      {q:"Qual é a raiz quadrada de 144?",a:["12","11","13","14"],c:0},
+      {q:"15% de 200 é igual a?",a:["30","25","20","35"],c:0},
+      {q:"Qual é o valor de π (pi) aproximado?",a:["3,14","2,71","1,41","4,20"],c:0},
+      {q:"Se x + 5 = 12, qual é x?",a:["7","8","6","5"],c:0},
+      {q:"Qual é o quadrado de 9?",a:["81","72","64","90"],c:0},
+      {q:"Quanto é 25% de 80?",a:["20","25","15","10"],c:0},
+      {q:"Qual é o resultado de 3³?",a:["27","9","81","18"],c:0},
+      {q:"Se um produto custa R$50 com 10% de desconto, qual o valor final?",a:["R$45","R$40","R$55","R$48"],c:0},
+      {q:"Quanto é 2/3 + 1/3?",a:["1","2/6","3/6","4/3"],c:0},
+      {q:"Qual é o perímetro de um quadrado de lado 5?",a:["20","25","10","15"],c:0},
+      {q:"Quanto é 144 ÷ 12?",a:["12","11","13","14"],c:0},
+    ],
+    medio:[
+      {q:"Qual é a área de um triângulo de base 10 e altura 6?",a:["30","60","15","45"],c:0},
+      {q:"Qual o resultado de 2³ + 3²?",a:["17","16","14","19"],c:0},
+      {q:"Se um trem anda a 80 km/h, em 3h percorre:",a:["240 km","160 km","320 km","200 km"],c:0},
+      {q:"Qual é o MDC de 24 e 36?",a:["12","6","8","18"],c:0},
+      {q:"Qual é a área de um círculo de raio 4? (π≈3,14)",a:["50,24","25,12","12,56","100,48"],c:0},
+      {q:"Quanto é log₁₀(1000)?",a:["3","4","2","10"],c:0},
+      {q:"Se 2x – 4 = 10, qual é x?",a:["7","6","8","5"],c:0},
+      {q:"A hipotenusa de um triângulo com catetos 3 e 4 é:",a:["5","7","6","4,5"],c:0},
+    ],
+    dificil:[
+      {q:"Qual é a solução de x² – 5x + 6 = 0?",a:["x=2 e x=3","x=1 e x=6","x=–2 e x=–3","x=2 e x=–3"],c:0},
+      {q:"O volume de uma esfera de raio 3 é: (use π≈3,14)",a:["113,04","94,2","28,26","150,72"],c:0},
+      {q:"Qual é a soma de uma PA com a₁=2, r=3 e n=10?",a:["155","120","175","140"],c:0},
+      {q:"Qual é a derivada de f(x) = 4x² + 3x?",a:["8x + 3","4x + 3","8x","4x"],c:0},
+      {q:"Em uma PG com a₁=2 e q=3, qual é o 4º termo?",a:["54","18","162","27"],c:0},
+      {q:"Qual é o valor de sen(30°)?",a:["1/2","√2/2","√3/2","1"],c:0},
+    ]
+  },
+  Portugues:{
+    facil:[
+      {q:"O que é um substantivo?",a:["Nome de seres e coisas","Palavra que modifica verbo","Liga orações","Expressa ação"],c:0},
+      {q:"Qual palavra está escrita corretamente?",a:["Exceção","Excessão","Ecceção","Exseção"],c:0},
+      {q:"'Ele correu rápido' – 'rápido' é um:",a:["Advérbio","Adjetivo","Substantivo","Pronome"],c:0},
+      {q:"Quantas sílabas tem 'abacaxi'?",a:["4","3","5","2"],c:0},
+      {q:"Qual é o antônimo de 'alegre'?",a:["Triste","Feliz","Animado","Empolgado"],c:0},
+      {q:"Qual recurso literário usa 'a vida é uma viagem'?",a:["Metáfora","Hipérbole","Ironia","Antítese"],c:0},
+      {q:"O plural de 'cidadão' é:",a:["Cidadãos","Cidadões","Cidadãoes","Cidadans"],c:0},
+      {q:"Qual é o sinônimo de 'belo'?",a:["Bonito","Feio","Triste","Velho"],c:0},
+      {q:"'Ela tem cabelos como ouro' é um exemplo de:",a:["Comparação","Metáfora","Hipérbole","Personificação"],c:0},
+      {q:"Qual é a forma correta?",a:["Meia-noite","Meianosité","Meia noite","Meianoite"],c:0},
+      {q:"O que é um verbo?",a:["Palavra que indica ação ou estado","Palavra que nomeia seres","Palavra que modifica substantivo","Palavra de ligação"],c:0},
+      {q:"Qual é o feminino de 'imperador'?",a:["Imperatriz","Imperadora","Imperadoressa","Imperoa"],c:0},
+    ],
+    medio:[
+      {q:"O que é sujeito oculto?",a:["Sujeito identificado pela desinência verbal","Sem sujeito expresso","Sujeito indeterminado","Expresso por pronome"],c:0},
+      {q:"'Cujo' é um pronome:",a:["Relativo","Pessoal","Demonstrativo","Indefinido"],c:0},
+      {q:"Em 'O menino bonito chegou', 'bonito' é:",a:["Adjetivo","Substantivo","Advérbio","Artigo"],c:0},
+      {q:"Qual a função do aposto?",a:["Explicar o termo anterior","Indicar modo","Ligar orações","Substituir nome"],c:0},
+      {q:"O que é oxítona?",a:["Palavra com acento na última sílaba","Acento na penúltima","Acento na antepenúltima","Sem acento"],c:0},
+      {q:"'Embora' geralmente inicia uma oração:",a:["Concessiva","Causal","Final","Temporal"],c:0},
+      {q:"Qual é a classe gramatical de 'muito' em 'Ele corre muito'?",a:["Advérbio","Adjetivo","Pronome","Substantivo"],c:0},
+      {q:"O que é zeugma?",a:["Omissão de termo já expresso","Repetição enfática","Inversão da ordem","Ironia disfarçada"],c:0},
+    ],
+    dificil:[
+      {q:"O pleonasmo vicioso é:",a:["Repetição desnecessária","Figura de linguagem válida","Inversão sintática","Paradoxo"],c:0},
+      {q:"Num período composto por subordinação, a oração principal:",a:["Não depende de outra","Depende de outra","É sempre final","Tem sujeito oculto"],c:0},
+      {q:"Qual é a diferença entre próclise e ênclise?",a:["Posição do pronome (antes/depois do verbo)","Tipo de pronome","Classe gramatical","Número de sílabas"],c:0},
+      {q:"O anacoluto é uma figura de:",a:["Construção/sintaxe","Som","Pensamento","Palavra"],c:0},
+      {q:"Qual escola literária brasileira valorizou o índio como herói nacional?",a:["Romantismo","Realismo","Modernismo","Barroco"],c:0},
+      {q:"'Macunaíma' é obra de qual autor modernista?",a:["Mário de Andrade","Oswald de Andrade","Manuel Bandeira","Carlos Drummond"],c:0},
+    ]
+  },
+  Ingles:{
+    facil:[
+      {q:"What is the translation of 'Friendship'?",a:["Amizade","Amor","Família","Felicidade"],c:0},
+      {q:"Which is the correct form: 'She ___ happy.'",a:["is","are","am","be"],c:0},
+      {q:"What does 'beautiful' mean?",a:["Bonito(a)","Feio(a)","Alto(a)","Pequeno(a)"],c:0},
+      {q:"How do you say 'obrigado' in English?",a:["Thank you","Sorry","Please","Welcome"],c:0},
+      {q:"'I have two ___.' (maçã no plural)",a:["apples","apple","applees","appls"],c:0},
+      {q:"Which is a color?",a:["Blue","Cat","Run","Happy"],c:0},
+      {q:"What does 'big' mean?",a:["Grande","Pequeno","Bonito","Rápido"],c:0},
+      {q:"How do you say 'cachorro' in English?",a:["Dog","Cat","Bird","Fish"],c:0},
+      {q:"'Good morning' is used:",a:["In the morning","At night","In the afternoon","At any time"],c:0},
+      {q:"What is the plural of 'child'?",a:["Children","Childs","Childes","Childrens"],c:0},
+      {q:"What does 'always' mean?",a:["Sempre","Nunca","Às vezes","Raramente"],c:0},
+      {q:"'I ___ a student.' (verbo to be)",a:["am","is","are","be"],c:0},
+    ],
+    medio:[
+      {q:"Choose the correct sentence:",a:["She doesn't like cats","She don't like cats","She not like cats","She no like cats"],c:0},
+      {q:"'Yesterday I ___ to school.' (go – past simple)",a:["went","go","gone","goed"],c:0},
+      {q:"What is the opposite of 'difficult'?",a:["Easy","Hard","Fast","Dark"],c:0},
+      {q:"'He ___ studying for 2 hours.' (present perfect continuous)",a:["has been","have been","is","was"],c:0},
+      {q:"Which sentence uses the Present Perfect correctly?",a:["I have visited Paris","I visited Paris yesterday","I visit Paris","I was visited Paris"],c:0},
+      {q:"What does 'although' mean?",a:["Embora","Porque","Portanto","Além disso"],c:0},
+      {q:"'If I ___ rich, I would travel.' (2nd conditional)",a:["were","am","will be","have been"],c:0},
+      {q:"'She asked me ___ I was fine.' (reported speech)",a:["if","that","what","how"],c:0},
+    ],
+    dificil:[
+      {q:"Choose the sentence in the Past Perfect:",a:["She had finished before he arrived","She finished before he arrived","She has finished","She will finish"],c:0},
+      {q:"'I wish I ___ taller.' (subjunctive mood)",a:["were","was","am","be"],c:0},
+      {q:"Which word is a gerund?",a:["Swimming","Swim","Swam","Swum"],c:0},
+      {q:"The passive voice of 'They built this house in 1900' is:",a:["This house was built in 1900","This house is built in 1900","This house has been built","This house had been built"],c:0},
+      {q:"'By the time she arrived, he ___ left.' (past perfect)",a:["had already","has already","already have","already had"],c:0},
+      {q:"Which sentence contains a dangling modifier?",a:["Walking down the street, the trees looked beautiful","She walked down the street carefully","The trees were beautiful","He noticed the tall trees"],c:0},
+    ]
+  },
+  Geografia:{
+    facil:[
+      {q:"Qual é a capital do Brasil?",a:["Brasília","São Paulo","Rio de Janeiro","Salvador"],c:0},
+      {q:"Qual é o maior país do mundo em extensão territorial?",a:["Rússia","China","EUA","Brasil"],c:0},
+      {q:"O Rio Amazonas fica em qual continente?",a:["América do Sul","África","Ásia","América do Norte"],c:0},
+      {q:"Qual é o oceano entre América e Europa?",a:["Atlântico","Pacífico","Índico","Ártico"],c:0},
+      {q:"Quantos estados tem o Brasil?",a:["26","25","27","28"],c:0},
+      {q:"Qual é a maior floresta tropical do mundo?",a:["Amazônia","Congo","Daintree","Borneo"],c:0},
+      {q:"Qual é a capital da Argentina?",a:["Buenos Aires","Santiago","Lima","Montevidéu"],c:0},
+      {q:"Em qual continente fica o Japão?",a:["Ásia","Europa","Oceania","África"],c:0},
+      {q:"Qual é o rio mais longo do mundo?",a:["Nilo","Amazonas","Yangtzé","Mississippi"],c:0},
+      {q:"Qual é o menor continente do mundo?",a:["Oceania","Europa","América do Norte","Antártida"],c:0},
+      {q:"Qual é a capital da França?",a:["Paris","Londres","Roma","Madrid"],c:0},
+      {q:"Em qual oceano fica o Japão?",a:["Pacífico","Atlântico","Índico","Ártico"],c:0},
+    ],
+    medio:[
+      {q:"Qual país tem a maior população do mundo (2024)?",a:["Índia","China","EUA","Indonésia"],c:0},
+      {q:"O Deserto do Saara fica em qual continente?",a:["África","Ásia","Oceania","América"],c:0},
+      {q:"Qual é o ponto mais alto do mundo?",a:["Monte Everest","Monte Kilimanjaro","Monte Aconcágua","Monte Blanc"],c:0},
+      {q:"Quantos países fazem fronteira com o Brasil?",a:["10","8","7","9"],c:0},
+      {q:"Qual é o bioma predominante no nordeste brasileiro?",a:["Caatinga","Cerrado","Amazônia","Pampa"],c:0},
+      {q:"Qual corrente oceânica aquece o norte da Europa?",a:["Corrente do Golfo","Corrente das Malvinas","Corrente de Humboldt","Corrente de Labrador"],c:0},
+      {q:"Qual é a capital da Austrália?",a:["Canberra","Sydney","Melbourne","Brisbane"],c:0},
+      {q:"O estreito de Gibraltar separa qual continente da África?",a:["Europa","Ásia","América","Oceania"],c:0},
+    ],
+    dificil:[
+      {q:"Qual estreito separa a Europa da África no extremo ocidental?",a:["Estreito de Gibraltar","Estreito de Bering","Estreito de Ormuz","Estreito de Malaca"],c:0},
+      {q:"Qual corrente oceânica influencia o clima da Europa Ocidental?",a:["Corrente do Golfo","Corrente das Malvinas","Corrente de Humboldt","Corrente da Califórnia"],c:0},
+      {q:"O fenômeno El Niño afeta principalmente:",a:["Temperatura e chuvas globais","Marés oceânicas","Ventos polares","Correntes de ar úmido"],c:0},
+      {q:"Qual é o país com maior diversidade de línguas oficiais?",a:["Papua Nova Guiné","África do Sul","Índia","Suíça"],c:0},
+      {q:"O Trópico de Capricórnio passa por quais regiões brasileiras?",a:["Sul e Sudeste","Norte e Nordeste","Centro-Oeste e Norte","Somente o Sul"],c:0},
+      {q:"Qual é o tipo climático predominante na região amazônica?",a:["Equatorial úmido","Tropical","Subtropical","Semiárido"],c:0},
+    ]
+  }
+};
+
+const EXTREME_QUESTIONS=[
+  {q:"Se 3x + 2y = 12 e x – y = 1, qual é o valor de x?",a:["2","3","4","1"],c:0,cat:"Matemática"},
+  {q:"Quem escreveu 'Dom Casmurro' e em que período literário?",a:["Machado de Assis – Realismo","José de Alencar – Romantismo","Eça de Queirós – Naturalismo","Euclides da Cunha – Pré-modernismo"],c:0,cat:"Português"},
+  {q:"The passive voice of 'They built this house in 1900' is:",a:["This house was built in 1900","This house is built in 1900","This house has been built","This house had been built"],c:0,cat:"Inglês"},
+  {q:"Qual evento imediato desencadeou a Primeira Guerra Mundial?",a:["Assassinato do Arquiduque Francisco Ferdinando","Invasão da Polônia pela Alemanha","Ataque a Pearl Harbor","Crise dos Mísseis em Cuba"],c:0,cat:"História"},
+  {q:"O Trópico de Capricórnio passa por quais regiões do Brasil?",a:["Sul e Sudeste","Norte e Nordeste","Centro-Oeste e Nordeste","Somente a Amazônia"],c:0,cat:"Geografia"},
+  {q:"Qual é a derivada de f(x) = x³ – 4x + 7?",a:["3x² – 4","3x² + 7","x² – 4","3x – 4"],c:0,cat:"Matemática"},
+  {q:"O 'Realismo' literário surge como reação a qual escola anterior?",a:["Romantismo","Barroco","Arcadismo","Modernismo"],c:0,cat:"Português"},
+  {q:"'I wish I ___ there yesterday.' Complete com Past Perfect Subjunctive:",a:["had been","was","were","have been"],c:0,cat:"Inglês"},
+  {q:"Qual foi o principal sistema econômico do Brasil colonial?",a:["Plantation com mão de obra escrava","Capitalismo industrial","Feudalismo agrário","Mercantilismo urbano"],c:0,cat:"História"},
+  {q:"Qual é a diferença entre latitude e longitude?",a:["Lat. mede distância do equador; Long. mede distância do meridiano","Lat. mede distância do polo; Long. mede distância do equador","São idênticas, apenas em planos diferentes","Lat. é horizontal; Long. é vertical apenas nos polos"],c:0,cat:"Geografia"},
+  {q:"Qual é a integral de f(x) = 2x?",a:["x² + C","2x² + C","x + C","2 + C"],c:0,cat:"Matemática"},
+  {q:"Oxímoro é uma figura de linguagem que:",a:["Une termos contraditórios","Exagera uma ideia","Personifica objetos","Omite um termo"],c:0,cat:"Português"},
+  {q:"'By the time she arrived, he ___ left.' Complete corretamente:",a:["had already","has already","already","already have"],c:0,cat:"Inglês"},
+  {q:"A Revolução Industrial iniciou-se em qual país e século?",a:["Inglaterra, séc. XVIII","França, séc. XIX","Alemanha, séc. XVIII","EUA, séc. XIX"],c:0,cat:"História"},
+  {q:"Qual processo geológico forma as cadeias montanhosas?",a:["Tectonismo de placas","Erosão fluvial","Vulcanismo isolado","Sedimentação marinha"],c:0,cat:"Geografia"},
+  {q:"Se log₂(x) = 5, qual é o valor de x?",a:["32","25","10","16"],c:0,cat:"Matemática"},
+  {q:"'Vidas Secas' de Graciliano Ramos pertence a qual geração modernista?",a:["Segunda geração (1930)","Primeira geração (1922)","Terceira geração (1945)","Pré-modernismo"],c:0,cat:"Português"},
+  {q:"Which tense is used in: 'She has been working here since 2010'?",a:["Present Perfect Continuous","Simple Present","Present Perfect Simple","Past Continuous"],c:0,cat:"Inglês"},
+  {q:"O que foi o 'New Deal' implementado por Roosevelt?",a:["Programa de recuperação econômica pós-1929","Aliança militar contra o fascismo","Plano de reconstrução europeia","Reforma da constituição americana"],c:0,cat:"História"},
+  {q:"Qual é a principal característica do clima mediterrâneo?",a:["Verões quentes e secos, invernos amenos e chuvosos","Frio extremo o ano todo","Chuvas distribuídas uniformemente","Altas temperaturas com chuvas constantes"],c:0,cat:"Geografia"},
+];
+
+const VF_QUESTIONS=[
+  {q:"O Brasil declarou independência em 7 de setembro de 1822.",a:true},
+  {q:"A fórmula da área do círculo é A = πr².",a:true},
+  {q:"Shakespeare escreveu 'Dom Quixote'.",a:false},
+  {q:"O oceano Pacífico é o maior oceano do mundo.",a:true},
+  {q:"In English, 'They' can refer to a single person.",a:true},
+  {q:"A soma dos ângulos internos de um triângulo é sempre 180°.",a:true},
+  {q:"O Rio de Janeiro é a capital do Brasil.",a:false},
+  {q:"A palavra 'cãs' é uma forma do plural de 'cão'.",a:true},
+  {q:"A água ferve a 100°C ao nível do mar.",a:true},
+  {q:"Napoleão Bonaparte era de origem italiana.",a:false},
+  {q:"O número π é exatamente igual a 22/7.",a:false},
+  {q:"A Revolução Francesa ocorreu no século XVIII.",a:true},
+  {q:"O maior planeta do sistema solar é Saturno.",a:false},
+  {q:"'Bater as botas' significa morrer em português coloquial.",a:true},
+  {q:"O verbo 'to go' no passado simples em inglês é 'goed'.",a:false},
+  {q:"O Brasil tem mais de 200 milhões de habitantes.",a:true},
+  {q:"A soma dos ângulos internos de um quadrilátero é 360°.",a:true},
+  {q:"A Amazônia cobre mais de 50% do território brasileiro.",a:false},
+  {q:"Em inglês, 'I have gone' e 'I went' têm o mesmo significado.",a:false},
+  {q:"A independência dos EUA foi declarada em 1776.",a:true},
+];
+
+/* ═══════════════ STATE ═══════════════ */
+let state={};
+let playerTimers=[null,null];
+let freezeInterval=null;
+
+/* ── SETUP UI ── */
+const AVATARS=['🦁','🐯','🦊','🐺','🦅','🐉','🤖','👾','⚡','🔥','❄️','💎'];
+const SUBJECTS=['História','Matemática','Português','Inglês','Geografia','Misto'];
+const DIFFS=['Fácil','Médio','Difícil'];
+
+function buildSetup(){
+  ['p1avatars','p2avatars'].forEach((id,pi)=>{
+    const el=document.getElementById(id);el.innerHTML='';
+    AVATARS.forEach((av,i)=>{
+      const b=document.createElement('button');
+      b.className='avatar-btn'+(i===pi*3?' selected':'');
+      b.textContent=av;
+      b.onclick=()=>{el.querySelectorAll('.avatar-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');};
+      el.appendChild(b);
+    });
+  });
+  const sr=document.getElementById('subjectRow');sr.innerHTML='';
+  SUBJECTS.forEach((s,i)=>{
+    const b=document.createElement('button');
+    b.className='opt-btn'+(i===5?' selected':'');
+    b.textContent=s;
+    b.onclick=()=>{sr.querySelectorAll('.opt-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');};
+    sr.appendChild(b);
+  });
+  const dr=document.getElementById('diffRow');dr.innerHTML='';
+  DIFFS.forEach((d,i)=>{
+    const b=document.createElement('button');
+    b.className='opt-btn'+(i===0?' selected':'');
+    b.textContent=d;
+    b.onclick=()=>{dr.querySelectorAll('.opt-btn').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');};
+    dr.appendChild(b);
+  });
+}
+buildSetup();
+
+function getSelected(rowId){const el=document.getElementById(rowId).querySelector('.selected');return el?el.textContent:'';}
+function getAvatar(avId){const el=document.getElementById(avId).querySelector('.selected');return el?el.textContent:'🔵';}
+
+/* ── GAME START ── */
+function startGame(){
+  const p1name=document.getElementById('p1name').value.trim()||'Jogador 1';
+  const p2name=document.getElementById('p2name').value.trim()||'Jogador 2';
+  const subject=getSelected('subjectRow')||'Misto';
+  const diff=getSelected('diffRow')||'Fácil';
+
+  state={
+    p:[
+      {name:p1name,avatar:getAvatar('p1avatars'),score:0,combo:0,maxCombo:0,correct:0,wrong:0,frozen:false},
+      {name:p2name,avatar:getAvatar('p2avatars'),score:0,combo:0,maxCombo:0,correct:0,wrong:0,frozen:false},
+    ],
+    subject, diff,
+    round:0,
+    nextExtremeAt:10,
+    startTime:Date.now(),
+    vfPending:null,
+    finished:false,
+    answered:[false,false],
+    currentQs:[null,null],
+    isExtreme:false,
+    extremeIdx:0,
+    // Anti-repeat pools per player
+    pools:[null,null],
+    usedExtreme:[],
+    usedVF:[],
+  };
+
+  showScreen('gameScreen');
+  updateHUD();
+  nextRound();
+}
+
+/* ── SCREEN ── */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ── HUD ── */
+function updateHUD(){
+  const p=state.p;
+  [0,1].forEach(pi=>{
+    const n=pi+1;
+    document.getElementById('hud'+n+'av').textContent=p[pi].avatar;
+    document.getElementById('hud'+n+'name').textContent=p[pi].name;
+    document.getElementById('hud'+n+'score').textContent=p[pi].score;
+    document.getElementById('hud'+n+'combo').textContent='Sequência: '+p[pi].combo+(p[pi].combo>=5?' 🔥':'');
+    document.getElementById('bar'+n).style.width=Math.min(p[pi].score,100)+'%';
+  });
+  document.getElementById('roundBadge').textContent='Rodada '+state.round;
+}
+
+/* ── QUESTION POOLS (anti-repeat) ── */
+function buildPool(pi){
+  const d=state.diff.toLowerCase()
+    .replace('á','a').replace('é','e').replace('í','i').replace('ó','o').replace('ú','u');
+  const key=d==='facil'?'facil':d==='medio'?'medio':'dificil';
+  const sub=state.subject;
+  const cats=sub==='Misto'?Object.keys(QUESTIONS):[
+    Object.keys(QUESTIONS).find(k=>k.toLowerCase()===sub.replace(/[áéíóú]/g,c=>({á:'a',é:'e',í:'i',ó:'o',ú:'u'})[c]).toLowerCase())||Object.keys(QUESTIONS)[0]
+  ];
+  let pool=[];
+  cats.forEach(cat=>{
+    const arr=QUESTIONS[cat]?QUESTIONS[cat][key]||QUESTIONS[cat]['facil']:[];
+    arr.forEach(q=>pool.push({...q,cat}));
+  });
+  // Shuffle the pool
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  return pool;
+}
+
+function pickQuestion(pi){
+  if(!state.pools[pi]||state.pools[pi].length===0){
+    state.pools[pi]=buildPool(pi);
+  }
+  const q=state.pools[pi].pop();
+  return shuffleQuestion(q);
+}
+
+function pickExtreme(){
+  // Rebuild if exhausted
+  if(state.usedExtreme.length>=EXTREME_QUESTIONS.length) state.usedExtreme=[];
+  const available=EXTREME_QUESTIONS.map((_,i)=>i).filter(i=>!state.usedExtreme.includes(i));
+  const idx=available[Math.floor(Math.random()*available.length)];
+  state.usedExtreme.push(idx);
+  return shuffleQuestion({...EXTREME_QUESTIONS[idx],extreme:true});
+}
+
+function pickVF(){
+  if(state.usedVF.length>=VF_QUESTIONS.length) state.usedVF=[];
+  const available=VF_QUESTIONS.map((_,i)=>i).filter(i=>!state.usedVF.includes(i));
+  const idx=available[Math.floor(Math.random()*available.length)];
+  state.usedVF.push(idx);
+  return VF_QUESTIONS[idx];
+}
+
+function shuffleQuestion(q){
+  const pairs=q.a.map((text,i)=>({text,isCorrect:i===q.c}));
+  for(let i=pairs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pairs[i],pairs[j]]=[pairs[j],pairs[i]];}
+  const newC=pairs.findIndex(p=>p.isCorrect);
+  return {...q,a:pairs.map(p=>p.text),c:newC};
+}
+
+/* ── ROUND ── */
+function nextRound(){
+  if(state.finished)return;
+  stopAllTimers();
+  state.round++;
+  state.answered=[false,false];
+  state.vfPending=null;
+  // Clean non-frozen freeze overlays
+  [0,1].forEach(pi=>{if(!state.p[pi].frozen){document.getElementById('side'+(pi+1)).querySelectorAll('.side-freeze-overlay').forEach(e=>e.remove());}});
+
+  // Check extreme trigger
+  const totalCorrect=state.p[0].correct+state.p[1].correct;
+  const isExtreme=totalCorrect>0&&totalCorrect>=state.nextExtremeAt;
+  if(isExtreme)state.nextExtremeAt+=10;
+  state.isExtreme=isExtreme;
+
+  // Each player gets their own question
+  [0,1].forEach(pi=>{
+    const q=isExtreme?pickExtreme():pickQuestion(pi);
+    state.currentQs[pi]=q;
+    renderQuestion(pi,q);
+  });
+
+  const catName=isExtreme?'⚡ EXTREMA':state.currentQs[0].cat||state.subject;
+  document.getElementById('catTag').textContent=catName;
+  if(isExtreme)showBanner('⚡ PERGUNTA EXTREMA! +3 PONTOS ⚡','extreme');
+
+  updateHUD();
+
+  // Handle frozen players
+  [0,1].forEach(pi=>{
+    document.getElementById('side'+(pi+1)).style.pointerEvents=state.p[pi].frozen?'none':'all';
+  });
+  updateBlockedIndicators();
+
+  // Start individual timers
+  [0,1].forEach(pi=>{
+    if(!state.p[pi].frozen) startPlayerTimer(pi);
+  });
+}
+
+/* ── RENDER QUESTION ── */
+function renderQuestion(pi,q){
+  const n=pi+1;
+  document.getElementById('qtext'+n).textContent=q.q;
+  const isExtreme=q.extreme;
+  const diff=state.diff;
+  let cls='diff-facil',lbl='FÁCIL';
+  if(isExtreme){cls='diff-extreme';lbl='EXTREMA ⚡';}
+  else if(diff==='Médio'){cls='diff-medio';lbl='MÉDIO';}
+  else if(diff==='Difícil'){cls='diff-dificil';lbl='DIFÍCIL';}
+  const badge=document.getElementById('qbadge'+n);
+  badge.className='difficulty-badge '+cls;
+  badge.textContent=lbl;
+  const grid=document.getElementById('answers'+n);
+  grid.innerHTML='';
+  q.a.forEach((ans,i)=>{
+    const btn=document.createElement('button');
+    btn.className='ans-btn '+(pi===0?'p1-style':'p2-style');
+    btn.textContent=String.fromCharCode(65+i)+') '+ans;
+    btn.onclick=()=>handleAnswer(pi,i);
+    grid.appendChild(btn);
+  });
+}
+
+/* ── INDIVIDUAL TIMERS ── */
+function getTime(){
+  const d=state.diff;
+  if(state.isExtreme)return 18;  // was 8, +10 but extreme need more
+  if(d==='Fácil')return 25;      // was 20 +5
+  if(d==='Médio')return 20;      // was 15 +5
+  return 15;                      // Difícil: was 10 +5
+}
+
+function startPlayerTimer(pi){
+  stopPlayerTimer(pi);
+  const maxT=getTime();
+  let t=maxT;
+  updatePlayerTimerDisplay(pi,t,maxT);
+  playerTimers[pi]=setInterval(()=>{
+    t--;
+    updatePlayerTimerDisplay(pi,t,maxT);
+    if(t<=0){
+      stopPlayerTimer(pi);
+      if(!state.answered[pi]&&!state.p[pi].frozen){
+        // Time out for this player
+        state.answered[pi]=true;
+        state.p[pi].combo=0;
+        const grid=document.getElementById('answers'+(pi+1));
+        grid.querySelectorAll('.ans-btn').forEach(b=>b.disabled=true);
+        grid.querySelectorAll('.ans-btn')[state.currentQs[pi].c]?.classList.add('correct');
+        updateHUD();
+        checkBothDone();
+      }
+    }
+  },1000);
+}
+
+function stopPlayerTimer(pi){
+  if(playerTimers[pi]){clearInterval(playerTimers[pi]);playerTimers[pi]=null;}
+}
+
+function stopAllTimers(){
+  [0,1].forEach(pi=>stopPlayerTimer(pi));
+}
+
+function updatePlayerTimerDisplay(pi,t,maxT){
+  const n=pi+1;
+  const numEl=document.getElementById('timerNum'+n);
+  const arcEl=document.getElementById('timerArc'+n);
+  numEl.textContent=t;
+  const pct=t/maxT;
+  const circ=113.1;
+  arcEl.style.strokeDashoffset=circ*(1-pct);
+  const col=pct>0.5?(pi===0?'var(--p1)':'var(--p2)'):pct>0.25?'#ff9500':'#ff0050';
+  arcEl.style.stroke=col;
+  numEl.style.color=col;
+}
+
+/* ── ANSWER HANDLING ── */
+function handleAnswer(pi,choiceIdx){
+  if(state.answered[pi])return;
+  if(state.p[pi].frozen)return;
+  state.answered[pi]=true;
+  stopPlayerTimer(pi);  // Stop this player's timer immediately
+
+  const q=state.currentQs[pi];
+  const correct=choiceIdx===q.c;
+  const n=pi+1;
+  const grid=document.getElementById('answers'+n);
+  const btns=grid.querySelectorAll('.ans-btn');
+  btns.forEach(b=>b.disabled=true);
+  btns[q.c].classList.add('correct');
+  if(!correct)btns[choiceIdx].classList.add('wrong');
+
+  const p=state.p[pi];
+  if(correct){
+    p.correct++;
+    const pts=q.extreme?3:1;
+    addScore(pi,pts);
+    p.combo++;
+    p.maxCombo=Math.max(p.maxCombo,p.combo);
+    playSound('correct');
+    showScorePop(pi,'+'+pts,true);
+
+    if(p.combo===5){
+      p.combo=0;
+      setTimeout(()=>triggerVF(pi),800);
+      return; // VF will handle progression
+    } else if(p.combo===10){
+      p.combo=0;
+      setTimeout(()=>triggerParalyze(pi),800);
+      return; // paralyze will handle checkBothDone
+    }
+  } else {
+    p.wrong++;
+    p.combo=0;
+    playSound('wrong');
+  }
+  updateHUD();
+
+  // If this player answered, show "waiting" overlay if other hasn't yet
+  if(!state.answered[pi===0?1:0]){
+    showWaitingOverlay(pi);
+  }
+
+  checkBothDone();
+}
+
+function showWaitingOverlay(pi){
+  const side=document.getElementById('side'+(pi+1));
+  if(side.querySelector('.answered-overlay'))return;
+  const ov=document.createElement('div');
+  ov.className='answered-overlay';
+  ov.innerHTML='<div class="answered-txt" style="color:'+(pi===0?'var(--p1)':'var(--p2)')+'">✓ AGUARDANDO...</div>';
+  side.appendChild(ov);
+}
+
+function removeWaitingOverlays(){
+  document.querySelectorAll('.answered-overlay').forEach(e=>e.remove());
+}
+
+function checkBothDone(){
+  removeWaitingOverlays();
+  if(state.answered[0]&&state.answered[1]){
+    if(!state.finished)setTimeout(nextRound,1200);
+  }
+}
+
+function updateBlockedIndicators(){
+  [0,1].forEach(pi=>{
+    const side=document.getElementById('side'+(pi+1));
+    let bi=side.querySelector('.blocked-indicator');
+    if(state.p[pi].frozen){
+      if(!bi){
+        bi=document.createElement('div');bi.className='blocked-indicator';
+        bi.innerHTML='<div class="bi-icon">❄️</div><div class="bi-txt">PARALISADO</div>';
+        side.appendChild(bi);
+      }
+    }else{if(bi)bi.remove();}
+  });
+}
+
+/* ── VF (ROUBO) ── */
+function triggerVF(pi){
+  if(state.finished)return;
+  showBanner(state.p[pi].name+' DESBLOQUEOU ROUBO DE PONTOS! 💰','steal');
+  state.vfPending={pi};
+  const vfQ=pickVF();
+  state.vfQuestion=vfQ;
+  showVFModal(pi,vfQ);
+}
+
+function showVFModal(pi,vfQ){
+  const grid=document.getElementById('answers'+(pi+1));
+  grid.innerHTML='';
+  const box=document.createElement('div');
+  box.className='vf-box';
+  box.innerHTML=`<div class="vf-question">❓ ${vfQ.q}</div>
+  <div class="vf-btns">
+    <button class="vf-btn vf-true" onclick="handleVF(${pi},true)">✅ VERDADEIRO</button>
+    <button class="vf-btn vf-false" onclick="handleVF(${pi},false)">❌ FALSO</button>
+  </div>`;
+  grid.appendChild(box);
+}
+
+function handleVF(pi,choice){
+  const vfQ=state.vfQuestion;
+  const correct=choice===vfQ.a;
+  const otherPi=pi===0?1:0;
+  const grid=document.getElementById('answers'+(pi+1));
+  grid.innerHTML='<div style="text-align:center;font-family:Bangers,cursive;font-size:22px;letter-spacing:2px;padding:20px;">'+(correct?'✅ ACERTOU! Roubou 3 pontos!':'❌ ERROU! Sem roubo.')+'</div>';
+  if(correct){
+    const stolen=Math.min(3,state.p[otherPi].score);
+    addScore(otherPi,-stolen);
+    addScore(pi,1+stolen);
+    playSound('special');
+    showScorePop(pi,'+'+(1+stolen),true);
+    showScorePop(otherPi,'-'+stolen,false);
+  } else {
+    playSound('wrong');
+  }
+  updateHUD();
+  setTimeout(()=>{
+    state.vfPending=null;
+    if(!state.answered[pi===0?1:0]){
+      showWaitingOverlay(pi);
+    }
+    checkBothDone();
+    // Restart other player's timer if still pending
+    if(!state.answered[otherPi]&&!state.p[otherPi].frozen&&!playerTimers[otherPi]){
+      startPlayerTimer(otherPi);
+    }
+  },1500);
+}
+
+/* ── PARALYZE ── */
+function triggerParalyze(pi){
+  if(state.finished)return;
+  const otherPi=pi===0?1:0;
+  showBanner(state.p[pi].name+' ATIVOU PARALISAÇÃO! ❄️','paralyze');
+  stopPlayerTimer(otherPi);
+  state.p[otherPi].frozen=true;
+  updateBlockedIndicators();
+  document.getElementById('side'+(otherPi+1)).style.pointerEvents='none';
+
+  const sideEl=document.getElementById('side'+(otherPi+1));
+  const freezeDiv=document.createElement('div');
+  freezeDiv.className='side-freeze-overlay';
+  freezeDiv.innerHTML=`<div class="freeze-title" style="font-size:clamp(22px,3.5vw,44px)">❄️ PARALISADO ❄️</div><div id="sideFreeze${otherPi}" style="font-family:Bangers,cursive;font-size:clamp(36px,6vw,72px);color:#fff;text-shadow:0 0 30px #00c6ff;margin-top:8px;">40</div>`;
+  sideEl.appendChild(freezeDiv);
+
+  let t=40;
+  freezeInterval=setInterval(()=>{
+    t--;
+    const el=document.getElementById('sideFreeze'+otherPi);
+    if(el)el.textContent=t;
+    if(t<=0){
+      clearInterval(freezeInterval);
+      freezeDiv.remove();
+      state.p[otherPi].frozen=false;
+      updateBlockedIndicators();
+      document.getElementById('side'+(otherPi+1)).style.pointerEvents='all';
+      // Resume timer if they haven't answered
+      if(!state.answered[otherPi])startPlayerTimer(otherPi);
+    }
+  },1000);
+
+  // If this player (pi) hasn't answered yet, show waiting
+  if(!state.answered[pi]){
+    showWaitingOverlay(pi);
+  }
+  checkBothDone();
+}
+
+/* ── SCORE ── */
+function addScore(pi,pts){
+  state.p[pi].score=Math.max(0,state.p[pi].score+pts);
+  updateHUD();
+  checkWin();
+}
+
+function checkWin(){
+  [0,1].forEach(pi=>{
+    if(state.p[pi].score>=100&&!state.finished){
+      state.finished=true;
+      stopAllTimers();
+      clearInterval(freezeInterval);
+      document.querySelectorAll('.side-freeze-overlay').forEach(el=>el.remove());
+      launchConfetti();
+      setTimeout(()=>showEnd(pi),1200);
+    }
+  });
+}
+
+/* ── END ── */
+function showEnd(pi){
+  const p=state.p[pi];
+  const opp=state.p[pi===0?1:0];
+  document.getElementById('winnerName').textContent=p.avatar+' '+p.name;
+  document.getElementById('winnerName').style.color=pi===0?'var(--p1)':'var(--p2)';
+  const elapsed=Math.round((Date.now()-state.startTime)/1000);
+  const min=Math.floor(elapsed/60);const sec=elapsed%60;
+  const stats=[
+    {lbl:'Pontuação Final',val:p.score+'pts'},
+    {lbl:'Oponente',val:opp.score+'pts'},
+    {lbl:'Acertos',val:p.correct},
+    {lbl:'Erros',val:p.wrong},
+    {lbl:'Maior Sequência',val:p.maxCombo+'🔥'},
+    {lbl:'Tempo Total',val:min+'m '+sec+'s'},
+  ];
+  const sg=document.getElementById('statsGrid');sg.innerHTML='';
+  stats.forEach(s=>{
+    const d=document.createElement('div');d.className='stat-card';
+    d.innerHTML=`<div class="stat-val">${s.val}</div><div class="stat-lbl">${s.lbl}</div>`;
+    sg.appendChild(d);
+  });
+  showScreen('endScreen');
+}
+
+function goSetup(){
+  stopAllTimers();
+  clearInterval(freezeInterval);
+  document.querySelectorAll('.side-freeze-overlay,.answered-overlay').forEach(el=>el.remove());
+  showScreen('setupScreen');
+}
+
+/* ── BANNER ── */
+function showBanner(msg,type){
+  const b=document.getElementById('eventBanner');
+  b.textContent=msg;b.className='show '+type;
+  setTimeout(()=>{b.className='';},2800);
+}
+
+/* ── SCORE POP ── */
+function showScorePop(pi,text,positive){
+  const el=document.createElement('div');
+  el.className='score-pop';el.textContent=text;
+  el.style.color=positive?'#00ff80':'#ff4060';
+  const side=document.getElementById('side'+(pi+1));
+  const rect=side.getBoundingClientRect();
+  el.style.left=rect.left+rect.width/2-20+'px';
+  el.style.top=rect.top+rect.height/2+'px';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),900);
+}
+
+/* ── CONFETTI ── */
+function launchConfetti(){
+  const colors=['#ffd700','#ff0050','#00c6ff','#00ff80','#ff6a00'];
+  for(let i=0;i<80;i++){
+    setTimeout(()=>{
+      const p=document.createElement('div');p.className='particle';
+      p.style.left=Math.random()*100+'vw';p.style.top='-20px';
+      p.style.background=colors[Math.floor(Math.random()*colors.length)];
+      p.style.animationDuration=(Math.random()*2+1.5)+'s';
+      document.body.appendChild(p);setTimeout(()=>p.remove(),3500);
+    },i*30);
+  }
+}
+
+/* ── SOUNDS ── */
+let audioCtx=null;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
+function playSound(type){
+  try{
+    const ac=getAC();
+    const g=ac.createGain();g.connect(ac.destination);g.gain.value=.25;
+    const o=ac.createOscillator();o.connect(g);
+    if(type==='correct'){o.frequency.setValueAtTime(880,ac.currentTime);o.frequency.exponentialRampToValueAtTime(1320,ac.currentTime+.15);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.3);o.start();o.stop(ac.currentTime+.3);}
+    else if(type==='wrong'){o.type='sawtooth';o.frequency.setValueAtTime(200,ac.currentTime);o.frequency.exponentialRampToValueAtTime(80,ac.currentTime+.25);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.3);o.start();o.stop(ac.currentTime+.3);}
+    else if(type==='special'){
+      [440,660,880,1100].forEach((f,i)=>{
+        const o2=ac.createOscillator();const g2=ac.createGain();o2.connect(g2);g2.connect(ac.destination);
+        o2.frequency.value=f;g2.gain.setValueAtTime(.15,ac.currentTime+i*.1);g2.gain.exponentialRampToValueAtTime(.001,ac.currentTime+i*.1+.2);
+        o2.start(ac.currentTime+i*.1);o2.stop(ac.currentTime+i*.1+.2);
+      });
+    }
+  }catch(e){}
+}
+</script>
+</body>
+</html>
